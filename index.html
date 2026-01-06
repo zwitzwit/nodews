@@ -3,41 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>静夜思 - 李白</title>
-    <!-- 引入Tailwind CSS用于快速美化界面 -->
+    <title>经典唐诗双语赏读</title>
+    <!-- 外部资源CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入Font Awesome图标 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 引入谷歌思源宋体，保证字体美观 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Serif:wght@400;600;700&display=swap" rel="stylesheet">
     
     <!-- 自定义样式 -->
     <style type="text/tailwindcss">
         @layer utilities {
-            /* 自定义字体类 */
-            .font-serif-sc {
-                font-family: 'Noto Serif SC', serif;
-            }
-            /* 诗歌文字渐变效果 */
+            /* 字体类 */
+            .font-serif-sc { font-family: 'Noto Serif SC', serif; }
+            .font-serif-en { font-family: 'Noto Serif', serif; }
+            
+            /* 文字渐变效果 */
             .text-gradient {
                 background-clip: text;
                 -webkit-background-clip: text;
                 color: transparent;
-                background-image: linear-gradient(to right, #4a5568, #2d3748);
+                background-image: linear-gradient(to right, #2d3748, #4a5568);
             }
-            /* 页面淡入动画 */
-            .fade-in {
-                animation: fadeIn 1.2s ease-in-out;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
+            
+            /* 动画与过渡 */
+            .fade-in { animation: fadeIn 1.2s ease-in-out; }
+            .content-transition { transition: all 0.5s ease-in-out; }
+            
+            /* 卡片遮罩 */
+            .card-overlay {
+                background-color: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(2px);
             }
         }
+
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
-    
+
     <!-- Tailwind配置 -->
     <script>
         tailwind.config = {
@@ -48,66 +54,466 @@
                         secondary: '#718096',
                         accent: '#9f7aea',
                     },
-                    fontFamily: {
-                        'serif-sc': ['Noto Serif SC', 'serif'],
-                    },
+                    boxShadow: {
+                        'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
+                    }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center px-4 py-8 font-serif-sc fade-in">
-    <!-- 页面容器 -->
-    <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8 md:p-12">
-        <!-- 头部信息 -->
+
+<!-- 恢复最初的纯色背景 -->
+<body class="bg-slate-50 min-h-screen flex items-center justify-center px-4 py-8 fade-in">
+    <!-- 背景音乐元素 -->
+    <audio id="bg-music" loop autoplay>
+        <source src="https://raw.githubusercontent.com/zwitzwit/nodews/refs/heads/hug/CKwRIDoEw9_EACv6uwDHrUPW.mp4" type="audio/mp4">
+        您的浏览器不支持音频播放
+    </audio>
+
+    <!-- 诗词展示主卡片 -->
+    <div class="max-w-2xl w-full card-overlay rounded-xl shadow-card p-6 md:p-10 relative">
+        <!-- 左右切换按钮 -->
+        <button id="prev-btn" class="absolute top-1/2 -left-3 md:-left-6 -translate-y-1/2 w-9 h-9 rounded-full bg-accent/90 text-white flex items-center justify-center hover:bg-accent transition-all focus:outline-none focus:ring-2 focus:ring-accent/50">
+            <i class="fa-solid fa-chevron-left text-sm"></i>
+        </button>
+        <button id="next-btn" class="absolute top-1/2 -right-3 md:-right-6 -translate-y-1/2 w-9 h-9 rounded-full bg-accent/90 text-white flex items-center justify-center hover:bg-accent transition-all focus:outline-none focus:ring-2 focus:ring-accent/50">
+            <i class="fa-solid fa-chevron-right text-sm"></i>
+        </button>
+
+        <!-- 顶部控制区域 -->
         <div class="text-center mb-8">
             <i class="fa-solid fa-book-open text-accent text-3xl mb-4"></i>
-            <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary text-gradient mb-2">静夜思</h1>
-            <div class="flex items-center justify-center text-secondary space-x-2">
-                <span class="text-lg">唐 · 李白</span>
-                <span class="w-10 h-[1px] bg-slate-200"></span>
+            
+            <!-- 音频控制按钮组 -->
+            <div class="flex justify-center mb-4 space-x-2">
+                <button id="music-toggle" class="px-3 py-2 bg-accent/90 text-white rounded-lg font-medium hover:bg-accent transition-all focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    <i class="fa-solid fa-pause mr-1" id="music-icon"></i> 暂停音乐
+                </button>
+                <button id="music-mute" class="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-slate-300">
+                    <i class="fa-solid fa-volume-up mr-1" id="mute-icon"></i> 静音
+                </button>
+            </div>
+
+            <!-- 语言切换按钮组 -->
+            <div class="flex justify-center mb-4">
+                <button id="btn-zh" class="px-4 py-2 bg-accent text-white rounded-l-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    <i class="fa-solid fa-language mr-1"></i> 中文
+                </button>
+                <button id="btn-en" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-r-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-slate-300">
+                    <i class="fa-solid fa-globe mr-1"></i> English
+                </button>
+            </div>
+
+            <!-- 诗词标题区域 - 中文 -->
+            <div id="title-zh" class="content-transition">
+                <h1 class="text-[clamp(1.8rem,5vw,2.8rem)] font-bold text-gradient mb-2" id="poem-title-zh">静夜思</h1>
+                <div class="flex items-center justify-center text-secondary space-x-2">
+                    <span class="text-lg font-serif-sc" id="poem-author-zh">唐 · 李白</span>
+                    <span class="w-10 h-[1px] bg-slate-200"></span>
+                </div>
+            </div>
+
+            <!-- 诗词标题区域 - 英文 -->
+            <div id="title-en" class="hidden content-transition">
+                <h1 class="text-[clamp(1.8rem,5vw,2.8rem)] font-bold text-gradient mb-2 font-serif-en" id="poem-title-en">Thoughts in the Silent Night</h1>
+                <div class="flex items-center justify-center text-secondary space-x-2">
+                    <span class="text-lg font-serif-en" id="poem-author-en">Tang Dynasty · Li Bai</span>
+                    <span class="w-10 h-[1px] bg-slate-200"></span>
+                </div>
+            </div>
+
+            <!-- 页码指示器 -->
+            <div class="mt-2 text-sm text-slate-500">
+                <span id="current-page">1</span> / <span id="total-page">10</span>
             </div>
         </div>
 
-        <!-- 诗歌内容 -->
-        <div class="mb-10">
-            <div class="text-[clamp(1.5rem,4vw,2rem)] text-primary text-center leading-loose mb-6">
-                <p>床前明月光，</p>
-                <p>疑是地上霜。</p>
-                <p>举头望明月，</p>
-                <p>低头思故乡。</p>
-            </div>
-            
-            <!-- 分割线 -->
-            <div class="flex items-center justify-center my-6">
-                <div class="h-[1px] bg-slate-200 w-16"></div>
-                <i class="fa-solid fa-star text-accent/50 mx-2"></i>
-                <div class="h-[1px] bg-slate-200 w-16"></div>
+        <!-- 诗词内容区域 -->
+        <div class="mb-8">
+            <!-- 中文内容区 -->
+            <div id="poem-zh" class="content-transition">
+                <!-- 诗词原文 -->
+                <div class="text-[clamp(1.2rem,4vw,1.8rem)] text-primary text-center leading-loose mb-6 font-serif-sc" id="poem-content-zh">
+                    床前明月光，<br>
+                    疑是地上霜。<br>
+                    举头望明月，<br>
+                    低头思故乡。
+                </div>
+                
+                <!-- 装饰分割线 -->
+                <div class="flex items-center justify-center my-6">
+                    <div class="h-[1px] bg-slate-200 w-16"></div>
+                    <i class="fa-solid fa-star text-accent/50 mx-2"></i>
+                    <div class="h-[1px] bg-slate-200 w-16"></div>
+                </div>
+                
+                <!-- 诗词赏析 -->
+                <div class="text-secondary text-base md:text-lg leading-relaxed px-4 md:px-8 font-serif-sc" id="poem-appreciation-zh">
+                    《静夜思》是唐代诗人李白的经典诗作，语言凝练，感情真挚。全诗仅二十字，却描绘出一幅清新自然的月夜思乡图。诗人由床前的月光联想到地上的白霜，从举头望月到低头思乡，将对故乡的思念之情表达得含蓄而深沉，成为千古传诵的思乡名篇。
+                </div>
             </div>
 
-            <!-- 诗歌赏析 -->
-            <div class="text-secondary text-lg leading-relaxed px-4 md:px-8">
-                <h3 class="font-semibold text-primary mb-3 flex items-center">
-                    <i class="fa-solid fa-pen-nib text-accent mr-2"></i>
-                    赏析
-                </h3>
-                <p>《静夜思》是唐代诗人李白的经典诗作，语言凝练，感情真挚。全诗仅二十字，却描绘出一幅清新自然的月夜思乡图。诗人由床前的月光联想到地上的白霜，从举头望月到低头思乡，将对故乡的思念之情表达得含蓄而深沉，成为千古传诵的思乡名篇。</p>
+            <!-- 英文内容区 -->
+            <div id="poem-en" class="hidden content-transition">
+                <!-- 英文译文 -->
+                <div class="text-[clamp(1.2rem,4vw,1.8rem)] text-primary text-center leading-loose mb-6 font-serif-en" id="poem-content-en">
+                    Before my bed a pool of light,<br>
+                    I wonder if it's frost aground.<br>
+                    I lift my head and watch the bright moon,<br>
+                    Lower my head and think of my hometown.
+                </div>
+                
+                <!-- 装饰分割线 -->
+                <div class="flex items-center justify-center my-6">
+                    <div class="h-[1px] bg-slate-200 w-16"></div>
+                    <i class="fa-solid fa-star text-accent/50 mx-2"></i>
+                    <div class="h-[1px] bg-slate-200 w-16"></div>
+                </div>
+                
+                <!-- 英文赏析 -->
+                <div class="text-secondary text-base md:text-lg leading-relaxed px-4 md:px-8 font-serif-en" id="poem-appreciation-en">
+                    "Thoughts in the Silent Night" is a classic poem by Li Bai of the Tang Dynasty, characterized by concise language and sincere emotions. With only twenty characters, the poem depicts a fresh and natural scene of homesickness under the moon. The poet associates the moonlight in front of his bed with frost on the ground, then looks up at the bright moon and lowers his head to miss his hometown, expressing his longing for his hometown implicitly and profoundly, becoming a timeless masterpiece of homesickness.
+                </div>
             </div>
         </div>
 
         <!-- 页脚 -->
         <div class="text-center text-slate-400 text-sm">
-            <p>经典诗词赏析 · 简约展示页</p>
+            经典唐诗双语赏读 · 简约雅致展示页
         </div>
     </div>
 
-    <!-- 简单的交互效果 -->
     <script>
-        // 给诗歌每行添加hover效果
-        document.querySelectorAll('.text-center p').forEach(line => {
-            line.classList.add('transition-all', 'duration-300', 'hover:text-accent', 'hover:scale-105');
-        });
+        // ===================== 核心数据定义 =====================
+        // 10首唐诗双语数据
+        const poemList = [
+            {
+                zh: { 
+                    title: "静夜思", 
+                    author: "唐 · 李白", 
+                    content: "床前明月光，<br>疑是地上霜。<br>举头望明月，<br>低头思故乡。", 
+                    appreciation: "《静夜思》是唐代诗人李白的经典诗作，语言凝练，感情真挚。全诗仅二十字，却描绘出一幅清新自然的月夜思乡图。诗人由床前的月光联想到地上的白霜，从举头望月到低头思乡，将对故乡的思念之情表达得含蓄而深沉，成为千古传诵的思乡名篇。" 
+                },
+                en: { 
+                    title: "Thoughts in the Silent Night", 
+                    author: "Tang Dynasty · Li Bai", 
+                    content: "Before my bed a pool of light,<br>I wonder if it's frost aground.<br>I lift my head and watch the bright moon,<br>Lower my head and think of my hometown.", 
+                    appreciation: "\"Thoughts in the Silent Night\" is a classic poem by Li Bai of the Tang Dynasty, characterized by concise language and sincere emotions. With only twenty characters, the poem depicts a fresh and natural scene of homesickness under the moon. The poet associates the moonlight in front of his bed with frost on the ground, then looks up at the bright moon and lowers his head to miss his hometown, expressing his longing for his hometown implicitly and profoundly, becoming a timeless masterpiece of homesickness." 
+                }
+            },
+            {
+                zh: { 
+                    title: "春晓", 
+                    author: "唐 · 孟浩然", 
+                    content: "春眠不觉晓，<br>处处闻啼鸟。<br>夜来风雨声，<br>花落知多少。", 
+                    appreciation: "《春晓》是唐代诗人孟浩然的代表作之一，语言平易自然，意境清新隽永。诗人抓住春天早晨醒来时的一瞬间展开描写，由春景联想到昨夜的风雨，表达了对春光流逝的淡淡惋惜之情。" 
+                },
+                en: { 
+                    title: "Spring Dawn", 
+                    author: "Tang Dynasty · Meng Haoran", 
+                    content: "I slept in spring not conscious of the dawn,<br>But heard the birds singing everywhere.<br>Last night I heard the sound of wind and rain,<br>How many blossoms have fallen down?", 
+                    appreciation: "\"Spring Dawn\" is one of the representative works of Meng Haoran, a poet of the Tang Dynasty. The language is plain and natural, and the artistic conception is fresh and meaningful. The poet describes the moment he wakes up in the spring morning, associating the spring scenery with the wind and rain of last night, expressing a faint regret for the passing of spring light." 
+                }
+            },
+            {
+                zh: { 
+                    title: "登鹳雀楼", 
+                    author: "唐 · 王之涣", 
+                    content: "白日依山尽，<br>黄河入海流。<br>欲穷千里目，<br>更上一层楼。", 
+                    appreciation: "《登鹳雀楼》是唐代诗人王之涣的千古名篇，前两句描绘了壮阔的山河景象，后两句蕴含着深刻的人生哲理，告诉人们只有站得更高，才能看得更远。" 
+                },
+                en: { 
+                    title: "On the Stork Tower", 
+                    author: "Tang Dynasty · Wang Zhihuan", 
+                    content: "The sun beyond the mountain glows;<br>The Yellow River seawards flows.<br>You can enjoy a grander sight,<br>By climbing to a greater height.", 
+                    appreciation: "\"On the Stork Tower\" is a timeless masterpiece by Wang Zhihuan, a poet of the Tang Dynasty. The first two lines depict the magnificent scenery of mountains and rivers, while the last two lines contain profound life philosophy, telling people that only by standing higher can they see farther." 
+                }
+            },
+            {
+                zh: { 
+                    title: "江雪", 
+                    author: "唐 · 柳宗元", 
+                    content: "千山鸟飞绝，<br>万径人踪灭。<br>孤舟蓑笠翁，<br>独钓寒江雪。", 
+                    appreciation: "《江雪》是柳宗元的代表作，全诗用极简的笔墨勾勒出一幅冰天雪地的寒江独钓图，意境幽远，寄托了诗人清高孤傲、不与世俗同流合污的品格。" 
+                },
+                en: { 
+                    title: "River Snow", 
+                    author: "Tang Dynasty · Liu Zongyuan", 
+                    content: "A thousand mountains no bird sings,<br>Ten thousand paths no footprint treads.<br>A lonely boat, an old man in straw cape and hat,<br>Fishes alone in the cold river snow.", 
+                    appreciation: "\"River Snow\" is a representative work of Liu Zongyuan. The whole poem uses minimal ink to outline a picture of fishing alone on a cold river in a world of ice and snow. The artistic conception is remote, embodying the poet's noble and aloof character that refuses to conform to the secular world." 
+                }
+            },
+            {
+                zh: { 
+                    title: "相思", 
+                    author: "唐 · 王维", 
+                    content: "红豆生南国，<br>春来发几枝。<br>愿君多采撷，<br>此物最相思。", 
+                    appreciation: "《相思》是王维的经典抒情小诗，以红豆为寄托，表达了对友人的深切思念。语言朴素无华，情感真挚动人，成为传唱千古的相思名篇。" 
+                },
+                en: { 
+                    title: "Yearning", 
+                    author: "Tang Dynasty · Wang Wei", 
+                    content: "Red beans grow in southern lands,<br>How many shoots in spring unfold?<br>Gather as many as you can,<br>For they are the symbol of longing most true.", 
+                    appreciation: "\"Yearning\" is a classic lyric poem by Wang Wei. Taking red beans as a sustenance, it expresses deep longing for friends. The language is plain and unadorned, and the emotion is sincere and touching, becoming a timeless masterpiece about longing." 
+                }
+            },
+            {
+                zh: { 
+                    title: "鹿柴", 
+                    author: "唐 · 王维", 
+                    content: "空山不见人，<br>但闻人语响。<br>返景入深林，<br>复照青苔上。", 
+                    appreciation: "《鹿柴》是王维山水诗的代表作之一，描绘了鹿柴附近空山深林在傍晚时分的幽静景色。全诗以动衬静，意境空灵悠远，体现了王维诗画交融的艺术特色。" 
+                },
+                en: { 
+                    title: "Deer Enclosure", 
+                    author: "Tang Dynasty · Wang Wei", 
+                    content: "In the empty mountain no man can be seen,<br>Yet voices of men are heard.<br>The reflected sunlight enters the deep forest,<br>And shines again upon the green moss.", 
+                    appreciation: "\"Deer Enclosure\" is one of the representative landscape poems of Wang Wei, depicting the quiet scenery of the empty mountain and deep forest near Deer Enclosure in the evening. The whole poem sets off stillness with movement, and the artistic conception is ethereal and remote, embodying the artistic feature of the integration of poetry and painting in Wang Wei's works." 
+                }
+            },
+            {
+                zh: { 
+                    title: "寻隐者不遇", 
+                    author: "唐 · 贾岛", 
+                    content: "松下问童子，<br>言师采药去。<br>只在此山中，<br>云深不知处。", 
+                    appreciation: "《寻隐者不遇》是贾岛的名作，以问答的形式，寥寥数语便勾勒出隐者的高洁形象和山林的幽深意境，语言简练，韵味无穷。" 
+                },
+                en: { 
+                    title: "Seeking the Hermit and Not Finding Him", 
+                    author: "Tang Dynasty · Jia Dao", 
+                    content: "Beneath the pine I asked the boy,<br>He said his master's gone to pick herbs.<br>He's somewhere in this mountain, I'm told,<br>But the clouds are thick, I know not where.", 
+                    appreciation: "\"Seeking the Hermit and Not Finding Him\" is a famous work by Jia Dao. In the form of question and answer, it outlines the noble image of the hermit and the remote artistic conception of the mountain forest in a few words, with concise language and endless charm." 
+                }
+            },
+            {
+                zh: { 
+                    title: "乐游原", 
+                    author: "唐 · 李商隐", 
+                    content: "向晚意不适，<br>驱车登古原。<br>夕阳无限好，<br>只是近黄昏。", 
+                    appreciation: "《乐游原》是李商隐的代表作之一，诗人驱车登古原，面对夕阳美景，既赞叹其壮丽，又感慨时光的短暂，蕴含着对人生的深沉思考。" 
+                },
+                en: { 
+                    title: "Leyou Plain", 
+                    author: "Tang Dynasty · Li Shangyin", 
+                    content: "Towards evening I felt out of sorts,<br>I drove my carriage to the ancient plain.<br>The setting sun is infinitely lovely,<br>Only it's near the dusk.", 
+                    appreciation: "\"Leyou Plain\" is one of the representative works of Li Shangyin. The poet drove his carriage to the ancient plain, and facing the beautiful scenery of the setting sun, he not only praised its magnificence, but also sighed at the shortness of time, containing profound thinking about life." 
+                }
+            },
+            {
+                zh: { 
+                    title: "夜宿山寺", 
+                    author: "唐 · 李白", 
+                    content: "危楼高百尺，<br>手可摘星辰。<br>不敢高声语，<br>恐惊天上人。", 
+                    appreciation: "《夜宿山寺》是李白的佳作，运用夸张的手法，极写山寺楼阁的高耸，语言豪放，想象奇特，展现了诗人浪漫主义的创作风格。" 
+                },
+                en: { 
+                    title: "Staying at a Mountain Temple for the Night", 
+                    author: "Tang Dynasty · Li Bai", 
+                    content: "The perilous tower stands a hundred feet high,<br>My hand could pluck the stars from the sky.<br>I dare not speak in a loud voice,<br>Lest I should alarm the immortals on high.", 
+                    appreciation: "\"Staying at a Mountain Temple for the Night\" is a fine work by Li Bai. Using exaggerated techniques, it describes the towering height of the mountain temple pavilion. The language is bold and unrestrained, and the imagination is peculiar, showing the poet's romantic creative style." 
+                }
+            },
+            {
+                zh: { 
+                    title: "送灵澈上人", 
+                    author: "唐 · 刘长卿", 
+                    content: "苍苍竹林寺，<br>杳杳钟声晚。<br>荷笠带斜阳，<br>青山独归远。", 
+                    appreciation: "《送灵澈上人》是刘长卿的送别诗名篇，描绘了傍晚送灵澈上人返寺的情景，意境清幽淡远，充满了诗情画意，表达了诗人对友人的真挚情谊。" 
+                },
+                en: { 
+                    title: "Seeing Off the Monk Lingche", 
+                    author: "Tang Dynasty · Liu Changqing", 
+                    content: "The bamboo forest temple is green and vast,<br>The distant bell rings out at eventide.<br>Shouldering his bamboo hat in the setting sun,<br>Alone he returns far to the green mountainside.", 
+                    appreciation: "\"Seeing Off the Monk Lingche\" is a famous farewell poem by Liu Changqing. It depicts the scene of seeing off Monk Lingche returning to the temple in the evening. The artistic conception is quiet and remote, full of poetic and picturesque flavor, expressing the poet's sincere friendship for his friend." 
+                }
+            }
+        ];
+
+        // ===================== DOM元素获取 =====================
+        // 诗词切换相关
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const currentPage = document.getElementById('current-page');
+        const totalPage = document.getElementById('total-page');
+        
+        // 诗词内容展示相关
+        const poemTitleZh = document.getElementById('poem-title-zh');
+        const poemAuthorZh = document.getElementById('poem-author-zh');
+        const poemContentZh = document.getElementById('poem-content-zh');
+        const poemAppreciationZh = document.getElementById('poem-appreciation-zh');
+        const poemTitleEn = document.getElementById('poem-title-en');
+        const poemAuthorEn = document.getElementById('poem-author-en');
+        const poemContentEn = document.getElementById('poem-content-en');
+        const poemAppreciationEn = document.getElementById('poem-appreciation-en');
+
+        // 语言切换相关
+        const btnZh = document.getElementById('btn-zh');
+        const btnEn = document.getElementById('btn-en');
+        const titleZh = document.getElementById('title-zh');
+        const titleEn = document.getElementById('title-en');
+        const poemZh = document.getElementById('poem-zh');
+        const poemEn = document.getElementById('poem-en');
+
+        // 音频控制相关
+        const bgMusic = document.getElementById('bg-music');
+        const musicToggle = document.getElementById('music-toggle');
+        const musicIcon = document.getElementById('music-icon');
+        const musicMute = document.getElementById('music-mute');
+        const muteIcon = document.getElementById('mute-icon');
+
+        // ===================== 全局状态管理 =====================
+        let currentPoemIndex = 0; // 当前显示的诗词索引
+
+        // ===================== 初始化 =====================
+        function init() {
+            // 设置总页数
+            totalPage.textContent = poemList.length;
+            // 加载初始诗词内容
+            updatePoemContent();
+            // 给诗词行添加hover效果
+            addPoemLineHoverEffect();
+            // 绑定所有事件监听
+            bindEventListeners();
+            // 处理浏览器自动播放限制
+            handleAutoPlayRestriction();
+        }
+
+        // ===================== 核心功能函数 =====================
+        // 更新诗词内容展示
+        function updatePoemContent() {
+            const currentPoem = poemList[currentPoemIndex];
+            
+            // 更新中文内容
+            poemTitleZh.textContent = currentPoem.zh.title;
+            poemAuthorZh.textContent = currentPoem.zh.author;
+            poemContentZh.innerHTML = currentPoem.zh.content;
+            poemAppreciationZh.textContent = currentPoem.zh.appreciation;
+            
+            // 更新英文内容
+            poemTitleEn.textContent = currentPoem.en.title;
+            poemAuthorEn.textContent = currentPoem.en.author;
+            poemContentEn.innerHTML = currentPoem.en.content;
+            poemAppreciationEn.textContent = currentPoem.en.appreciation;
+            
+            // 更新页码显示
+            currentPage.textContent = currentPoemIndex + 1;
+        }
+
+        // 诗词行添加hover效果
+        function addPoemLineHoverEffect() {
+            document.querySelectorAll('#poem-content-zh, #poem-content-en').forEach(container => {
+                container.querySelectorAll('br').forEach(br => {
+                    const p = document.createElement('p');
+                    p.classList.add('transition-all', 'duration-300', 'hover:text-accent', 'hover:scale-105');
+                    p.textContent = br.previousSibling?.textContent || '';
+                    br.parentNode.replaceChild(p, br.previousSibling);
+                    br.parentNode.removeChild(br);
+                });
+            });
+        }
+
+        // 绑定所有事件监听
+        function bindEventListeners() {
+            // 诗词切换事件
+            prevBtn.addEventListener('click', () => {
+                currentPoemIndex = (currentPoemIndex - 1 + poemList.length) % poemList.length;
+                updatePoemContent();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentPoemIndex = (currentPoemIndex + 1) % poemList.length;
+                updatePoemContent();
+            });
+
+            // 语言切换事件
+            btnZh.addEventListener('click', switchToChinese);
+            btnEn.addEventListener('click', switchToEnglish);
+
+            // 音频控制事件
+            musicToggle.addEventListener('click', toggleMusicPlay);
+            musicMute.addEventListener('click', toggleMusicMute);
+        }
+
+        // 切换到中文显示
+        function switchToChinese() {
+            // 更新按钮样式
+            btnZh.classList.remove('bg-slate-200', 'text-slate-700');
+            btnZh.classList.add('bg-accent', 'text-white');
+            btnEn.classList.remove('bg-accent', 'text-white');
+            btnEn.classList.add('bg-slate-200', 'text-slate-700');
+            
+            // 切换内容显示
+            titleZh.classList.remove('hidden');
+            titleEn.classList.add('hidden');
+            poemZh.classList.remove('hidden');
+            poemEn.classList.add('hidden');
+            
+            // 更新页面语言属性
+            document.documentElement.lang = 'zh-CN';
+        }
+
+        // 切换到英文显示
+        function switchToEnglish() {
+            // 更新按钮样式
+            btnEn.classList.remove('bg-slate-200', 'text-slate-700');
+            btnEn.classList.add('bg-accent', 'text-white');
+            btnZh.classList.remove('bg-accent', 'text-white');
+            btnZh.classList.add('bg-slate-200', 'text-slate-700');
+            
+            // 切换内容显示
+            titleEn.classList.remove('hidden');
+            titleZh.classList.add('hidden');
+            poemEn.classList.remove('hidden');
+            poemZh.classList.add('hidden');
+            
+            // 更新页面语言属性
+            document.documentElement.lang = 'en';
+        }
+
+        // 播放/暂停音乐
+        function toggleMusicPlay() {
+            if (bgMusic.paused) {
+                bgMusic.play();
+                musicIcon.classList.remove('fa-play');
+                musicIcon.classList.add('fa-pause');
+                musicToggle.innerHTML = '<i class="fa-solid fa-pause mr-1" id="music-icon"></i> 暂停音乐';
+            } else {
+                bgMusic.pause();
+                musicIcon.classList.remove('fa-pause');
+                musicIcon.classList.add('fa-play');
+                musicToggle.innerHTML = '<i class="fa-solid fa-play mr-1" id="music-icon"></i> 播放音乐';
+            }
+        }
+
+        // 静音/取消静音
+        function toggleMusicMute() {
+            bgMusic.muted = !bgMusic.muted;
+            
+            if (bgMusic.muted) {
+                muteIcon.classList.remove('fa-volume-up');
+                muteIcon.classList.add('fa-volume-mute');
+                musicMute.innerHTML = '<i class="fa-solid fa-volume-mute mr-1" id="mute-icon"></i> 取消静音';
+            } else {
+                muteIcon.classList.remove('fa-volume-mute');
+                muteIcon.classList.add('fa-volume-up');
+                musicMute.innerHTML = '<i class="fa-solid fa-volume-up mr-1" id="mute-icon"></i> 静音';
+            }
+        }
+
+        // 处理浏览器自动播放限制
+        function handleAutoPlayRestriction() {
+            document.addEventListener('click', () => {
+                if (bgMusic.paused) {
+                    bgMusic.play().catch(error => {
+                        console.log('自动播放失败，点击页面后播放：', error);
+                    });
+                }
+            }, { once: true });
+        }
+
+        // ===================== 启动应用 =====================
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
-
